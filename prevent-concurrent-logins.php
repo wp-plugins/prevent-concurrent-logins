@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Prevent Concurrent Logins
  * Description: Prevents users from staying logged into the same account from multiple places.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: Frankie Jarrett
  * Author URI: http://frankiejarrett.com
  * License: GPLv2+
@@ -40,8 +40,19 @@ function pcl_get_current_session() {
  *
  * @return void
  */
-function pcl_disallow_account_sharing() {
+function pcl_prevent_concurrent_logins() {
 	if ( ! pcl_user_has_concurrent_sessions() ) {
+		return;
+	}
+
+	/**
+	 * Filter to allow certain users to have concurrent sessions when necessary
+	 *
+	 * @param int  ID of the current user
+	 *
+	 * @return bool
+	 */
+	if ( false === apply_filters( 'pcl_prevent_concurrent_logins', true, get_current_user_id() ) ) {
 		return;
 	}
 
@@ -54,4 +65,4 @@ function pcl_disallow_account_sharing() {
 		wp_destroy_current_session();
 	}
 }
-add_action( 'init', 'pcl_disallow_account_sharing' );
+add_action( 'init', 'pcl_prevent_concurrent_logins' );
