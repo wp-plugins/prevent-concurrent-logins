@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Prevent Concurrent Logins
  * Description: Prevents users from staying logged into the same account from multiple places.
- * Version: 0.2.0
+ * Version: 0.3.0
  * Author: Frankie Jarrett
  * Author URI: http://frankiejarrett.com
  * License: GPLv2+
@@ -12,7 +12,7 @@
 /**
  * Define plugin constants
  */
-define( 'PREVENT_CONCURRENT_LOGINS_VERSION', '0.2.0' );
+define( 'PREVENT_CONCURRENT_LOGINS_VERSION', '0.3.0' );
 define( 'PREVENT_CONCURRENT_LOGINS_PLUGIN', plugin_basename( __FILE__ ) );
 
 /**
@@ -51,14 +51,16 @@ function pcl_prevent_concurrent_logins() {
 		return;
 	}
 
+	$user_id = get_current_user_id();
+
 	/**
 	 * Filter to allow certain users to have concurrent sessions when necessary
 	 *
-	 * @param int  ID of the current user
+	 * @param int $user_id  ID of the current user
 	 *
 	 * @return bool
 	 */
-	if ( false === apply_filters( 'pcl_prevent_concurrent_logins', true, get_current_user_id() ) ) {
+	if ( false === apply_filters( 'pcl_prevent_concurrent_logins', true, $user_id ) ) {
 		return;
 	}
 
@@ -67,8 +69,22 @@ function pcl_prevent_concurrent_logins() {
 
 	if ( $session['login'] === $newest ) {
 		wp_destroy_other_sessions();
+
+		/**
+		 * Fires after a user's non-current sessions are destroyed
+		 *
+		 * @param int $user_id  ID of the current user
+		 */
+		do_action( 'pcl_destroy_other_sessions', $user_id );
 	} else {
 		wp_destroy_current_session();
+
+		/**
+		 * Fires after a user's current session is destroyed
+		 *
+		 * @param int $user_id  ID of the current user
+		 */
+		do_action( 'pcl_destroy_current_session', $user_id );
 	}
 }
 add_action( 'init', 'pcl_prevent_concurrent_logins' );
